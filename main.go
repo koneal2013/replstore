@@ -9,6 +9,7 @@ import (
 
 func main() {
 	store := &kvs.InMemoryKeyValueStore{}
+	txStack := &kvs.TransactionStack{}
 
 	for {
 		fmt.Print("> ")
@@ -19,13 +20,21 @@ func main() {
 			continue
 		}
 
+		// Determine the target for the operation: either the store or the current transaction.
+		var target kvs.KeyValueStore
+		if txStack.Current() != nil {
+			target = txStack.Current()
+		} else {
+			target = store
+		}
+
 		switch strings.ToUpper(cmd) {
 		case "READ":
 			if _, err = fmt.Scan(&key); err != nil {
 				fmt.Println("Error:", err)
 				continue
 			}
-			val, err := store.Get(key)
+			val, err := target.Get(key)
 			if err != nil {
 				fmt.Println("Error:", err)
 			} else {
@@ -36,7 +45,7 @@ func main() {
 				fmt.Println("Error:", err)
 				continue
 			}
-			if err = store.Put(key, value); err != nil {
+			if err = target.Put(key, value); err != nil {
 				fmt.Println("Error:", err)
 			}
 		case "DELETE":
@@ -44,8 +53,19 @@ func main() {
 				fmt.Println("Error:", err)
 				continue
 			}
-			if err = store.Delete(key); err != nil {
+			if err = target.Delete(key); err != nil {
 				fmt.Println("Error:", err)
+			}
+		case "START":
+			txStack.Push()
+		case "COMMIT":
+			if txStack.Current() != nil {
+				txStack.Current().Commit()
+				txStack.Pop()
+			}
+		case "ABORT":
+			if txStack.Current() != nil {
+				txStack.Pop()
 			}
 		case "QUIT":
 			fmt.Println("Exiting...")
