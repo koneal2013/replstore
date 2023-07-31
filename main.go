@@ -13,10 +13,13 @@ func main() {
 
 	for {
 		fmt.Print("> ")
+
 		var cmd, key, value string
+
 		_, err := fmt.Scan(&cmd)
 		if err != nil {
 			fmt.Println("Error:", err)
+
 			continue
 		}
 
@@ -32,8 +35,10 @@ func main() {
 		case "READ":
 			if _, err = fmt.Scan(&key); err != nil {
 				fmt.Println("Error:", err)
+
 				continue
 			}
+
 			val, err := target.Get(key)
 			if err != nil {
 				fmt.Println("Error:", err)
@@ -43,16 +48,20 @@ func main() {
 		case "WRITE":
 			if _, err = fmt.Scan(&key, &value); err != nil {
 				fmt.Println("Error:", err)
+
 				continue
 			}
+
 			if err = target.Put(key, value); err != nil {
 				fmt.Println("Error:", err)
 			}
 		case "DELETE":
 			if _, err = fmt.Scan(&key); err != nil {
 				fmt.Println("Error:", err)
+
 				continue
 			}
+
 			if err = target.Delete(key); err != nil {
 				fmt.Println("Error:", err)
 			}
@@ -69,6 +78,7 @@ func main() {
 			}
 		case "QUIT":
 			fmt.Println("Exiting...")
+
 			return
 		default:
 			fmt.Println("Unknown command")

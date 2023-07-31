@@ -15,17 +15,20 @@ func (s *InMemoryKeyValueStore) Get(key string) (string, error) {
 	if !ok {
 		return "", ErrKeyNotFound
 	}
+
 	return value.(string), nil
 }
 
 // Put stores the value for the given key.
 func (s *InMemoryKeyValueStore) Put(key, value string) error {
 	s.data.Store(key, value)
+
 	return nil
 }
 
 // Delete removes the key-value pair for the given key.
 func (s *InMemoryKeyValueStore) Delete(key string) error {
 	s.data.Delete(key)
+
 	return nil
 }
