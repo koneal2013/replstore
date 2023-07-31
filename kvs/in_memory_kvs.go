@@ -1,7 +1,6 @@
 package kvs
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -14,7 +13,7 @@ type InMemoryKeyValueStore struct {
 func (s *InMemoryKeyValueStore) Get(key string) (string, error) {
 	value, ok := s.data.Load(key)
 	if !ok {
-		return "", errors.New("key not found")
+		return "", ErrKeyNotFound
 	}
 	return value.(string), nil
 }

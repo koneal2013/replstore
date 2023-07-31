@@ -23,4 +23,5 @@ func TestInMemoryKeyValueStore(t *testing.T) {
 
 	_, err = store.Get("key1")
 	require.Error(t, err)
+	require.Equal(t, err, ErrKeyNotFound)
 }
