@@ -41,6 +41,6 @@ To run the applicaton:
 The project includes unit tests for the `InMemoryKeyValueStore`, `Transaction`, and `TransactionStack` types. You can run the tests using the `go test` command:
 
 ```bash
-go test ./...
+go test ./kvs -v
 ```
 
