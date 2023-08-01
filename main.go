@@ -88,7 +88,7 @@ func executeRead(target kvs.KeyValueStore, params []string) {
 		if err != nil {
 			fmt.Println("Error:", err)
 		} else {
-			fmt.Println(val)
+			fmt.Println(strings.ToLower(val))
 		}
 	}
 }
