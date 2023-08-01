@@ -45,11 +45,12 @@ func readCmd() (cmd string, err error) {
 // getTarget gets the target for the operation.
 func getTarget(store kvs.KeyValueStore,
 	txStack *kvs.TransactionStack) kvs.KeyValueStore {
-	if txStack.Current() != nil {
-		return txStack.Current()
+	tx, err := txStack.Current()
+	if err != nil {
+		return store
 	}
 
-	return store
+	return tx
 }
 
 // processCommand processes a command.
@@ -123,16 +124,33 @@ func startCommand(txStack *kvs.TransactionStack) {
 
 // commitCommand commits a transaction.
 func commitCommand(txStack *kvs.TransactionStack) {
-	if txStack.Current() != nil {
-		txStack.Current().Commit()
-		txStack.Pop()
+	tx, err := txStack.Current()
+	if err != nil {
+		fmt.Println("Error:", err)
+
+		return
+	}
+
+	tx.Commit()
+
+	err = txStack.Pop()
+	if err != nil {
+		fmt.Println("Error:", err)
 	}
 }
 
 // abortCommand aborts a transaction.
 func abortCommand(txStack *kvs.TransactionStack) {
-	if txStack.Current() != nil {
-		txStack.Pop()
+	_, err := txStack.Current()
+	if err != nil {
+		fmt.Println("Error:", err)
+
+		return
+	}
+
+	err = txStack.Pop()
+	if err != nil {
+		fmt.Println("Error:", err)
 	}
 }
 

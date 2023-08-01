@@ -42,13 +42,20 @@ func TestTransactionStack(t *testing.T) {
 
 	stack.Push()
 
-	require.NotNil(t, stack.Current(), "Expected current transaction, got nil")
-
-	trans := stack.Current()
-	err := trans.Put("test", "value")
+	tx, err := stack.Current()
 	require.NoError(t, err)
 
-	stack.Pop()
+	require.NotNil(t, tx, "Expected current transaction, got nil")
 
-	require.Nil(t, stack.Current(), "Expected nil current transaction, got non-nil")
+	err = tx.Put("test", "value")
+	require.NoError(t, err)
+
+	err = stack.Pop()
+	require.NoError(t, err)
+
+	tx, err = stack.Current()
+	require.Error(t, err)
+	require.Equal(t, ErrNoTransactions, err)
+
+	require.Nil(t, tx, "Expected nil current transaction, got non-nil")
 }

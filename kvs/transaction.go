@@ -1,7 +1,13 @@
 package kvs
 
 import (
+	"errors"
 	"sync"
+)
+
+var (
+	ErrNoTransactions = errors.New("there are no transactions")
+	ErrStackIsEmpty   = errors.New("tx stack is empty")
 )
 
 type Transaction struct {
@@ -92,13 +98,23 @@ func (s *TransactionStack) Push() {
 }
 
 // Pop pops the top transaction from the stack.
-func (s *TransactionStack) Pop() {
+func (s *TransactionStack) Pop() error {
+	if s.top == nil {
+		return ErrStackIsEmpty
+	}
+
 	if s.top != nil {
 		s.top = s.top.prev
 	}
+
+	return nil
 }
 
 // Current returns the transaction at the top of the stack.
-func (s *TransactionStack) Current() *Transaction {
-	return s.top
+func (s *TransactionStack) Current() (*Transaction, error) {
+	if s.top == nil {
+		return nil, ErrNoTransactions
+	}
+
+	return s.top, nil
 }
