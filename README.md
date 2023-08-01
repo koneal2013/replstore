@@ -33,7 +33,7 @@ go build
 To run the applicaton:
 
 ```base
-./kenston-oneal
+./kv-store
 ```
 
 ## Testing
@@ -42,6 +42,5 @@ The project includes unit tests for the `InMemoryKeyValueStore`, `Transaction`, 
 
 ```bash
 go test ./...
-
 ```
 
