@@ -33,6 +33,7 @@ func main() {
 
 func parseInput(input string) Command {
 	split := strings.Fields(strings.ToUpper(input))
+
 	return Command{
 		Action: split[0],
 		Params: split[1:],
@@ -44,6 +45,7 @@ func chooseTarget(store kvs.KeyValueStore, txStack *kvs.TransactionStack) kvs.Ke
 	if err != nil {
 		return store
 	}
+
 	return tx
 }
 
@@ -71,6 +73,7 @@ func executeCommand(command Command, target kvs.KeyValueStore, txStack *kvs.Tran
 func getKeyValueFromParams(params []string) (key string, value string, err error) {
 	if len(params) < 2 {
 		err = fmt.Errorf("not enough parameters")
+
 		return "", "", err
 	}
 
