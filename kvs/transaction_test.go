@@ -2,14 +2,13 @@ package kvs
 
 import (
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestTransaction_Put(t *testing.T) {
-	trans := Transaction{store: &sync.Map{}, deleted: make(map[string]bool)}
+	trans := Transaction{store: make(map[string]string), deleted: make(map[string]bool)}
 	err := trans.Put("test", "value")
 	require.NoError(t, err)
 
@@ -20,7 +19,7 @@ func TestTransaction_Put(t *testing.T) {
 }
 
 func TestTransaction_Delete(t *testing.T) {
-	trans := Transaction{store: &sync.Map{}, deleted: make(map[string]bool)}
+	trans := Transaction{store: make(map[string]string), deleted: make(map[string]bool)}
 	err := trans.Put("test", "value")
 	require.NoError(t, err)
 
@@ -39,8 +38,10 @@ func TestTransaction_Delete(t *testing.T) {
 
 func TestTransactionStack(t *testing.T) {
 	stack := TransactionStack{}
+	kvStore := NewInMemoryKVStore()
+	tx := NewTransaction(kvStore)
 
-	stack.Push()
+	stack.Push(tx)
 
 	tx, err := stack.Current()
 	require.NoError(t, err)

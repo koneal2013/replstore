@@ -2,7 +2,6 @@ package kvs
 
 import (
 	"errors"
-	"sync"
 )
 
 var (
@@ -11,9 +10,18 @@ var (
 )
 
 type Transaction struct {
-	store   *sync.Map       // Map to store key-value pairs
-	deleted map[string]bool // Map to track deleted keys
-	prev    *Transaction    // Parent transaction
+	store   map[string]string // Map to store key-value pairs
+	deleted map[string]bool   // Map to track deleted keys
+	prev    *Transaction      // Parent transaction
+	kvStore KeyValueStore
+}
+
+func NewTransaction(kvStore KeyValueStore) *Transaction {
+	return &Transaction{
+		store:   make(map[string]string),
+		deleted: make(map[string]bool),
+		kvStore: kvStore,
+	}
 }
 
 // Get retrieves a key if it isn't marked as deleted
@@ -23,9 +31,9 @@ func (t *Transaction) Get(key string) (string, error) {
 		return "", ErrKeyNotFound
 	}
 
-	value, ok := t.store.Load(key)
+	value, ok := t.store[key]
 	if ok {
-		return value.(string), nil
+		return value, nil
 	}
 
 	if t.prev != nil {
@@ -41,7 +49,7 @@ func (t *Transaction) Put(key, value string) error {
 		return ErrKeyValueEmpty
 	}
 
-	t.store.Store(key, value)
+	t.store[key] = value
 	delete(t.deleted, key)
 
 	return nil
@@ -53,7 +61,7 @@ func (t *Transaction) Delete(key string) error {
 		return ErrKeyEmpty
 	}
 
-	t.store.Delete(key)
+	delete(t.store, key)
 	t.deleted[key] = true
 
 	return nil
@@ -63,14 +71,16 @@ func (t *Transaction) Delete(key string) error {
 // If there's no parent, it does nothing.
 func (t *Transaction) Commit() {
 	if t.prev != nil {
-		t.store.Range(func(key, value interface{}) bool {
-			t.prev.store.Store(key.(string), value.(string))
-
-			return true
-		})
+		for key, value := range t.store {
+			t.prev.store[key] = value
+		}
 
 		for key := range t.deleted {
 			t.prev.deleted[key] = true
+		}
+	} else if t.kvStore != nil {
+		for key, value := range t.store {
+			_ = t.kvStore.Put(key, value)
 		}
 	}
 }
@@ -80,22 +90,16 @@ type TransactionStack struct {
 }
 
 // Push creates a new transaction and pushes it to the top of the stack.
-func (s *TransactionStack) Push() {
-	newTransaction := &Transaction{
-		store:   &sync.Map{},
-		deleted: make(map[string]bool),
-		prev:    s.top,
-	}
+func (s *TransactionStack) Push(newTx *Transaction) {
+	newTx.prev = s.top
 
 	if s.top != nil {
-		s.top.store.Range(func(key, value interface{}) bool {
-			newTransaction.store.Store(key, value)
-
-			return true
-		})
+		for key, value := range s.top.store {
+			newTx.store[key] = value
+		}
 	}
 
-	s.top = newTransaction
+	s.top = newTx
 }
 
 // Pop pops the top transaction from the stack.

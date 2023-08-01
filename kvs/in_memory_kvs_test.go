@@ -7,7 +7,7 @@ import (
 )
 
 func TestInMemoryKeyValueStore(t *testing.T) {
-	store := &InMemoryKeyValueStore{}
+	store := NewInMemoryKVStore()
 
 	// Test Put and Get
 	err := store.Put("key1", "value1")

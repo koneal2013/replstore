@@ -14,8 +14,8 @@ type cmdValues struct {
 }
 
 func main() {
-	store := &kvs.InMemoryKeyValueStore{}
 	txStack := &kvs.TransactionStack{}
+	store := kvs.NewInMemoryKVStore()
 
 	for {
 		fmt.Print("> ")
@@ -64,7 +64,7 @@ func processCommand(values cmdValues, target kvs.KeyValueStore,
 	case "DELETE":
 		deleteCommand(target)
 	case "START":
-		startCommand(txStack)
+		startCommand(target, txStack)
 	case "COMMIT":
 		commitCommand(txStack)
 	case "ABORT":
@@ -118,8 +118,8 @@ func deleteCommand(target kvs.KeyValueStore) {
 }
 
 // startCommand starts a new transaction.
-func startCommand(txStack *kvs.TransactionStack) {
-	txStack.Push()
+func startCommand(kvStore kvs.KeyValueStore, txStack *kvs.TransactionStack) {
+	txStack.Push(kvs.NewTransaction(kvStore))
 }
 
 // commitCommand commits a transaction.
