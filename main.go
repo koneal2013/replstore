@@ -21,6 +21,7 @@ func main() {
 		fmt.Print("> ")
 
 		var values cmdValues
+
 		cmd, err := readCmd()
 		if err != nil {
 			fmt.Println("Error:", err)
