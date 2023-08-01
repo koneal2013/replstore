@@ -21,7 +21,12 @@ func main() {
 		fmt.Print("> ")
 
 		var values cmdValues
-		values.cmd, _ = readCmd()
+		cmd, err := readCmd()
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+
+		values.cmd = cmd
 
 		target := getTarget(store, txStack)
 
@@ -32,9 +37,6 @@ func main() {
 // readCmd reads a command line.
 func readCmd() (cmd string, err error) {
 	_, err = fmt.Scan(&cmd)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
 
 	return strings.ToUpper(cmd), err
 }
@@ -54,11 +56,11 @@ func processCommand(values cmdValues, target kvs.KeyValueStore,
 	txStack *kvs.TransactionStack) {
 	switch values.cmd {
 	case "READ":
-		readCommand(values.key, target)
+		readCommand(target)
 	case "WRITE":
-		writeCommand(values.key, values.value, target)
+		writeCommand(target)
 	case "DELETE":
-		deleteCommand(values.key, target)
+		deleteCommand(target)
 	case "START":
 		startCommand(txStack)
 	case "COMMIT":
@@ -73,7 +75,7 @@ func processCommand(values cmdValues, target kvs.KeyValueStore,
 }
 
 // readCommand reads a value.
-func readCommand(key string, target kvs.KeyValueStore) {
+func readCommand(target kvs.KeyValueStore) {
 	key, err := readKey()
 	if err != nil {
 		return
@@ -87,8 +89,8 @@ func readCommand(key string, target kvs.KeyValueStore) {
 	}
 }
 
-// writeCommand writes a keyvalue pair.
-func writeCommand(key, value string, target kvs.KeyValueStore) {
+// writeCommand writes a key value pair.
+func writeCommand(target kvs.KeyValueStore) {
 	key, value, err := readKeyValue()
 	if err != nil {
 		return
@@ -101,7 +103,7 @@ func writeCommand(key, value string, target kvs.KeyValueStore) {
 }
 
 // deleteCommand deletes a key.
-func deleteCommand(key string, target kvs.KeyValueStore) {
+func deleteCommand(target kvs.KeyValueStore) {
 	key, err := readKey()
 	if err != nil {
 		return
