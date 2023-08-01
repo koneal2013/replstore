@@ -68,22 +68,6 @@ func (t *Transaction) Commit() {
 	}
 }
 
-// Revert undoes changes made in the current transaction while considering the parent transaction.
-func (t *Transaction) Revert() {
-	if t.prev != nil {
-		t.store.Range(func(key, value interface{}) bool {
-			if _, ok := t.prev.store.Load(key.(string)); !ok {
-				t.store.Delete(key)
-			} else if _, ok := t.deleted[key.(string)]; ok {
-				t.prev.store.Delete(key)
-				delete(t.prev.deleted, key.(string))
-			}
-
-			return true
-		})
-	}
-}
-
 type TransactionStack struct {
 	top *Transaction // Top transaction in the stack
 }

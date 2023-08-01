@@ -42,7 +42,7 @@ func readCmd() (cmd string, err error) {
 }
 
 // getTarget gets the target for the operation.
-func getTarget(store *kvs.InMemoryKeyValueStore,
+func getTarget(store kvs.KeyValueStore,
 	txStack *kvs.TransactionStack) kvs.KeyValueStore {
 	if txStack.Current() != nil {
 		return txStack.Current()
