@@ -35,6 +35,7 @@ func readCmd() (cmd string, err error) {
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+
 	return strings.ToUpper(cmd), err
 }
 
@@ -44,6 +45,7 @@ func getTarget(store *kvs.InMemoryKeyValueStore,
 	if txStack.Current() != nil {
 		return txStack.Current()
 	}
+
 	return store
 }
 
@@ -72,8 +74,7 @@ func processCommand(values cmdValues, target kvs.KeyValueStore,
 
 // readCommand reads a value.
 func readCommand(key string, target kvs.KeyValueStore) {
-	var err error
-	key, err = readKey()
+	key, err := readKey()
 	if err != nil {
 		return
 	}
@@ -88,8 +89,7 @@ func readCommand(key string, target kvs.KeyValueStore) {
 
 // writeCommand writes a keyvalue pair.
 func writeCommand(key, value string, target kvs.KeyValueStore) {
-	var err error
-	key, value, err = readKeyValue()
+	key, value, err := readKeyValue()
 	if err != nil {
 		return
 	}
@@ -102,8 +102,7 @@ func writeCommand(key, value string, target kvs.KeyValueStore) {
 
 // deleteCommand deletes a key.
 func deleteCommand(key string, target kvs.KeyValueStore) {
-	var err error
-	key, err = readKey()
+	key, err := readKey()
 	if err != nil {
 		return
 	}
@@ -146,6 +145,7 @@ func readKey() (key string, err error) {
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+
 	return key, err
 }
 
@@ -155,5 +155,6 @@ func readKeyValue() (key, value string, err error) {
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+
 	return key, value, err
 }

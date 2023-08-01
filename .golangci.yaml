@@ -97,7 +97,6 @@ linters:
     - nosnakecase
     - testpackage
     - depguard
-    - funlen
     - gocognit
     - gofumpt
     - forcetypeassert
