@@ -60,6 +60,7 @@ func (t *Transaction) Delete(key string) error {
 }
 
 // Commit pushes changes made in the current transaction to the parent transaction.
+// If there's no parent, it does nothing.
 func (t *Transaction) Commit() {
 	if t.prev != nil {
 		t.store.Range(func(key, value interface{}) bool {
