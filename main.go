@@ -2,10 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"kv-store/kvs"
 )
+
+// cmdValues is used to store values of a command line.
+type cmdValues struct {
+	cmd, key, value string
+}
 
 func main() {
 	store := &kvs.InMemoryKeyValueStore{}
@@ -14,74 +20,140 @@ func main() {
 	for {
 		fmt.Print("> ")
 
-		var cmd, key, value string
+		var values cmdValues
+		values.cmd, _ = readCmd()
 
-		_, err := fmt.Scan(&cmd)
-		if err != nil {
-			fmt.Println("Error:", err)
+		target := getTarget(store, txStack)
 
-			continue
-		}
-
-		// Determine the target for the operation: either the store or the current transaction.
-		var target kvs.KeyValueStore
-		if txStack.Current() != nil {
-			target = txStack.Current()
-		} else {
-			target = store
-		}
-
-		switch strings.ToUpper(cmd) {
-		case "READ":
-			if _, err = fmt.Scan(&key); err != nil {
-				fmt.Println("Error:", err)
-
-				continue
-			}
-
-			val, err := target.Get(key)
-			if err != nil {
-				fmt.Println("Error:", err)
-			} else {
-				fmt.Println(val)
-			}
-		case "WRITE":
-			if _, err = fmt.Scan(&key, &value); err != nil {
-				fmt.Println("Error:", err)
-
-				continue
-			}
-
-			if err = target.Put(key, value); err != nil {
-				fmt.Println("Error:", err)
-			}
-		case "DELETE":
-			if _, err = fmt.Scan(&key); err != nil {
-				fmt.Println("Error:", err)
-
-				continue
-			}
-
-			if err = target.Delete(key); err != nil {
-				fmt.Println("Error:", err)
-			}
-		case "START":
-			txStack.Push()
-		case "COMMIT":
-			if txStack.Current() != nil {
-				txStack.Current().Commit()
-				txStack.Pop()
-			}
-		case "ABORT":
-			if txStack.Current() != nil {
-				txStack.Pop()
-			}
-		case "QUIT":
-			fmt.Println("Exiting...")
-
-			return
-		default:
-			fmt.Println("Unknown command")
-		}
+		processCommand(values, target, txStack)
 	}
+}
+
+// readCmd reads a command line.
+func readCmd() (cmd string, err error) {
+	_, err = fmt.Scan(&cmd)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	return strings.ToUpper(cmd), err
+}
+
+// getTarget gets the target for the operation.
+func getTarget(store *kvs.InMemoryKeyValueStore,
+	txStack *kvs.TransactionStack) kvs.KeyValueStore {
+	if txStack.Current() != nil {
+		return txStack.Current()
+	}
+	return store
+}
+
+// processCommand processes a command.
+func processCommand(values cmdValues, target kvs.KeyValueStore,
+	txStack *kvs.TransactionStack) {
+	switch values.cmd {
+	case "READ":
+		readCommand(values.key, target)
+	case "WRITE":
+		writeCommand(values.key, values.value, target)
+	case "DELETE":
+		deleteCommand(values.key, target)
+	case "START":
+		startCommand(txStack)
+	case "COMMIT":
+		commitCommand(txStack)
+	case "ABORT":
+		abortCommand(txStack)
+	case "QUIT":
+		quitCommand()
+	default:
+		fmt.Println("Unknown command")
+	}
+}
+
+// readCommand reads a value.
+func readCommand(key string, target kvs.KeyValueStore) {
+	var err error
+	key, err = readKey()
+	if err != nil {
+		return
+	}
+
+	val, err := target.Get(key)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println(val)
+	}
+}
+
+// writeCommand writes a keyvalue pair.
+func writeCommand(key, value string, target kvs.KeyValueStore) {
+	var err error
+	key, value, err = readKeyValue()
+	if err != nil {
+		return
+	}
+
+	err = target.Put(key, value)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
+
+// deleteCommand deletes a key.
+func deleteCommand(key string, target kvs.KeyValueStore) {
+	var err error
+	key, err = readKey()
+	if err != nil {
+		return
+	}
+
+	err = target.Delete(key)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
+
+// startCommand starts a new transaction.
+func startCommand(txStack *kvs.TransactionStack) {
+	txStack.Push()
+}
+
+// commitCommand commits a transaction.
+func commitCommand(txStack *kvs.TransactionStack) {
+	if txStack.Current() != nil {
+		txStack.Current().Commit()
+		txStack.Pop()
+	}
+}
+
+// abortCommand aborts a transaction.
+func abortCommand(txStack *kvs.TransactionStack) {
+	if txStack.Current() != nil {
+		txStack.Pop()
+	}
+}
+
+// quitCommand quits the application.
+func quitCommand() {
+	fmt.Println("Exiting...")
+	os.Exit(0)
+}
+
+// readKey reads a key.
+func readKey() (key string, err error) {
+	_, err = fmt.Scan(&key)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	return key, err
+}
+
+// readKeyValue reads a key and a value.
+func readKeyValue() (key, value string, err error) {
+	_, err = fmt.Scan(&key, &value)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	return key, value, err
 }
