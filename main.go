@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -8,174 +9,131 @@ import (
 	"kv-store/kvs"
 )
 
-// cmdValues is used to store values of a command line.
-type cmdValues struct {
-	cmd, key, value string
+type Command struct {
+	Action string
+	Params []string
 }
 
 func main() {
 	txStack := &kvs.TransactionStack{}
 	store := kvs.NewInMemoryKVStore()
+	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		fmt.Print("> ")
 
-		var values cmdValues
+		input, _ := reader.ReadString('\n')
+		command := parseInput(input)
 
-		cmd, err := readCmd()
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
+		target := chooseTarget(store, txStack)
 
-		values.cmd = cmd
-
-		target := getTarget(store, txStack)
-
-		processCommand(values, target, txStack)
+		executeCommand(command, target, txStack)
 	}
 }
 
-// readCmd reads a command line.
-func readCmd() (cmd string, err error) {
-	_, err = fmt.Scan(&cmd)
-
-	return strings.ToUpper(cmd), err
+func parseInput(input string) Command {
+	split := strings.Fields(strings.ToUpper(input))
+	return Command{
+		Action: split[0],
+		Params: split[1:],
+	}
 }
 
-// getTarget gets the target for the operation.
-func getTarget(store kvs.KeyValueStore,
-	txStack *kvs.TransactionStack) kvs.KeyValueStore {
+func chooseTarget(store kvs.KeyValueStore, txStack *kvs.TransactionStack) kvs.KeyValueStore {
 	tx, err := txStack.Current()
 	if err != nil {
 		return store
 	}
-
 	return tx
 }
 
-// processCommand processes a command.
-func processCommand(values cmdValues, target kvs.KeyValueStore,
-	txStack *kvs.TransactionStack) {
-	switch values.cmd {
+func executeCommand(command Command, target kvs.KeyValueStore, txStack *kvs.TransactionStack) {
+	switch command.Action {
 	case "READ":
-		readCommand(target)
+		executeRead(target, command.Params)
 	case "WRITE":
-		writeCommand(target)
+		executeWrite(target, command.Params)
 	case "DELETE":
-		deleteCommand(target)
+		executeDelete(target, command.Params)
 	case "START":
-		startCommand(target, txStack)
+		txStack.Push(kvs.NewTransaction(target))
 	case "COMMIT":
-		commitCommand(txStack)
+		commitTransaction(txStack)
 	case "ABORT":
-		abortCommand(txStack)
+		abortTransaction(txStack)
 	case "QUIT":
-		quitCommand()
+		os.Exit(0)
 	default:
 		fmt.Println("Unknown command")
 	}
 }
 
-// readCommand reads a value.
-func readCommand(target kvs.KeyValueStore) {
-	key, err := readKey()
-	if err != nil {
-		return
+func getKeyValueFromParams(params []string) (key string, value string, err error) {
+	if len(params) < 2 {
+		err = fmt.Errorf("not enough parameters")
+		return "", "", err
 	}
 
-	val, err := target.Get(key)
+	return params[0], params[1], nil
+}
+
+func executeRead(target kvs.KeyValueStore, params []string) {
+	if len(params) < 1 {
+		fmt.Println("Error: not enough parameters")
+	} else {
+		val, err := target.Get(params[0])
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println(val)
+		}
+	}
+}
+
+func executeWrite(target kvs.KeyValueStore, params []string) {
+	key, value, err := getKeyValueFromParams(params)
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {
-		fmt.Println(val)
+		err = target.Put(key, value)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
 }
 
-// writeCommand writes a key value pair.
-func writeCommand(target kvs.KeyValueStore) {
-	key, value, err := readKeyValue()
-	if err != nil {
-		return
-	}
-
-	err = target.Put(key, value)
-	if err != nil {
-		fmt.Println("Error:", err)
+func executeDelete(target kvs.KeyValueStore, params []string) {
+	if len(params) < 1 {
+		fmt.Println("Error: not enough parameters")
+	} else {
+		err := target.Delete(params[0])
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
 }
 
-// deleteCommand deletes a key.
-func deleteCommand(target kvs.KeyValueStore) {
-	key, err := readKey()
-	if err != nil {
-		return
-	}
-
-	err = target.Delete(key)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-}
-
-// startCommand starts a new transaction.
-func startCommand(kvStore kvs.KeyValueStore, txStack *kvs.TransactionStack) {
-	txStack.Push(kvs.NewTransaction(kvStore))
-}
-
-// commitCommand commits a transaction.
-func commitCommand(txStack *kvs.TransactionStack) {
+func commitTransaction(txStack *kvs.TransactionStack) {
 	tx, err := txStack.Current()
 	if err != nil {
 		fmt.Println("Error:", err)
-
-		return
-	}
-
-	tx.Commit()
-
-	err = txStack.Pop()
-	if err != nil {
-		fmt.Println("Error:", err)
+	} else {
+		tx.Commit()
+		err = txStack.Pop()
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
 }
 
-// abortCommand aborts a transaction.
-func abortCommand(txStack *kvs.TransactionStack) {
+func abortTransaction(txStack *kvs.TransactionStack) {
 	_, err := txStack.Current()
 	if err != nil {
 		fmt.Println("Error:", err)
-
-		return
+	} else {
+		err = txStack.Pop()
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
-
-	err = txStack.Pop()
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-}
-
-// quitCommand quits the application.
-func quitCommand() {
-	fmt.Println("Exiting...")
-	os.Exit(0)
-}
-
-// readKey reads a key.
-func readKey() (key string, err error) {
-	_, err = fmt.Scan(&key)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	return key, err
-}
-
-// readKeyValue reads a key and a value.
-func readKeyValue() (key, value string, err error) {
-	_, err = fmt.Scan(&key, &value)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	return key, value, err
 }

@@ -23,6 +23,10 @@ func (s *InMemoryKVStore) Get(key string) (string, error) {
 
 // Put stores the value for the given key.
 func (s *InMemoryKVStore) Put(key, value string) error {
+	if key == "" || value == "" {
+		return ErrKeyValueEmpty
+	}
+
 	s.data[key] = value
 
 	return nil
