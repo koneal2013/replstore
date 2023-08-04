@@ -40,7 +40,7 @@ func (t *Transaction) Get(key string) (string, error) {
 		return t.prev.Get(key)
 	}
 
-	return "", ErrKeyNotFound
+	return t.kvStore.Get(key)
 }
 
 // Put adds a key-value pair to the store and removes the key from the deleted map if it exists there.
@@ -68,7 +68,6 @@ func (t *Transaction) Delete(key string) error {
 }
 
 // Commit pushes changes made in the current transaction to the parent transaction.
-// If there's no parent, it does nothing.
 func (t *Transaction) Commit() {
 	if t.prev != nil {
 		for key, value := range t.store {
