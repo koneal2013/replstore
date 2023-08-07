@@ -2,12 +2,15 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"kv-store/kvs"
 )
+
+var ErrEmptyInput = errors.New("input cannot be empty")
 
 type Command struct {
 	Action string
@@ -29,7 +32,12 @@ func main() {
 			continue
 		}
 
-		command := parseInput(input)
+		command, err := parseInput(input)
+		if err != nil {
+			fmt.Println("Error: ", err)
+
+			continue
+		}
 
 		target := chooseTarget(store, txStack)
 
@@ -37,13 +45,17 @@ func main() {
 	}
 }
 
-func parseInput(input string) Command {
+func parseInput(input string) (Command, error) {
+	if strings.TrimSpace(input) == "" {
+		return Command{}, ErrEmptyInput
+	}
+
 	split := strings.Fields(strings.ToUpper(input))
 
 	return Command{
 		Action: split[0],
 		Params: split[1:],
-	}
+	}, nil
 }
 
 func chooseTarget(store kvs.KeyValueStore, txStack *kvs.TransactionStack) kvs.KeyValueStore {
