@@ -22,7 +22,13 @@ func main() {
 	for {
 		fmt.Print("> ")
 
-		input, _ := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error: ", err)
+
+			continue
+		}
+
 		command := parseInput(input)
 
 		target := chooseTarget(store, txStack)
