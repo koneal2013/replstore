@@ -26,7 +26,7 @@ To install the project, you need to have Go installed on your machine. You can t
 
 ```bash
 git clone https://github.com/openly-hiring/kenston-oneal.git
-cd kenston-oneal
+cd replstore
 go build
 ```
 

@@ -1,4 +1,4 @@
-module kv-store
+module github.com/koneal2013/replstore
 
 go 1.18
 

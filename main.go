@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"kv-store/kvs"
+	"github.com/koneal2013/replstore/kvs"
 )
 
 var ErrEmptyInput = errors.New("input cannot be empty")
