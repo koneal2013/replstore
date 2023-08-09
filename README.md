@@ -25,7 +25,7 @@ The project includes a simple command-line interface for interacting with the ke
 To install the project, you need to have Go installed on your machine. You can then clone the repository and build the project:
 
 ```bash
-git clone https://github.com/openly-hiring/kenston-oneal.git
+git clone https://github.com/koneal2013/replstore.git
 cd replstore
 go build
 ```
@@ -33,7 +33,7 @@ go build
 To run the applicaton:
 
 ```base
-./kv-store
+./replstore
 ```
 
 ## Testing
